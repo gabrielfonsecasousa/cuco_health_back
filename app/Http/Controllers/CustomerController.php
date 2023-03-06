@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Repositories\Eloquent\CustomerRepository;
 use Request;
@@ -29,5 +30,12 @@ class CustomerController extends Controller
         $customers = $customers->get();
         return CustomerResource::collection($customers);
     }
-
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(CustomerRequest $request)
+    {
+        $customer = $this->model->create($request->validated());
+        return new CustomerResource($customer);
+    }
 }
