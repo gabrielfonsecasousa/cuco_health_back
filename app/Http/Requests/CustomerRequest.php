@@ -7,22 +7,26 @@ use Illuminate\Foundation\Http\FormRequest;
 class CustomerRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return false;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
+     * Transform the resource into an array.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string, mixed>
      */
-    public function rules(): array
+    public function toArray($request)
     {
         return [
-            //
+            'id' => $this->id,
+            'name' => $this->name,
+            'cpf' => $this->cpf,
+            'birthday' => $this->birthday,
+            'phone' => $this->phone,
+        ];
+    }
+
+    public function with($request)
+    {
+        return [
+            'message' => 'Customer successfully recovered.',
+            'status' => 200,
         ];
     }
 }
