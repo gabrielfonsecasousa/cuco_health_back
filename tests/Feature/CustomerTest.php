@@ -1,77 +1,124 @@
 <?php
-namespace App\Http\Controllers;
 
-use App\Http\Requests\CustomerRequest;
+namespace Tests\Feature;
+
+use App\Http\Controllers\CustomersController;
 use App\Http\Resources\CustomerResource;
+use App\Models\Customer;
 use App\Repositories\Eloquent\CustomerRepository;
-use Request;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Request;
+use Mockery;
+use Tests\TestCase;
 
-class CustomersController extends Controller
+class CustomerTest extends TestCase
 {
-    protected $model;
-    public function __construct(CustomerRepository $model)
+    use RefreshDatabase;
+
+    public function testIndex()
     {
-        $this->model = $model;
+        $response = $this->get('/api/customers');
+        $this->assertEquals(200, $response->getStatusCode());
     }
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function testStore()
     {
-        $request = Request::all();
-        $customers = $this->model->query();
-        if (isset($request['cpf'])) {
-            $customers = $customers->where('cpf', 'like', '%' . $request['cpf'] . '%');
-        }
-        if (isset($request['name'])) {
-            $customers = $customers->where('name', 'like', '%' . $request['name'] . '%');
-        }
-        $customers = $customers->get();
-        return CustomerResource::collection($customers);
+        // Crie um registro de cliente no banco de dados
+        $customer = Customer::factory()->create();
+        $data = [
+            'name' => $customer->name,
+            'cpf' => $customer->cpf,
+            'phone' => $customer->phone,
+            'birthday' => $customer->birthday,
+        ];
+        $customer->delete();
+        // Faça uma requisição POST para o endpoint /api/customers
+        $response = $this->post('/api/customers', $data);
+        // Verifique se o status da resposta é 201 (OK)
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('customers', $data);
+
+    }
+    public function testShow()
+    {
+        $customer = Customer::factory()->create();
+
+        // Faça uma requisição GET para o endpoint /customers/{id}
+        $response = $this->get('/api/customers/' . $customer->id);
+
+        // Verifique se o status da resposta é 200 (OK)
+        $response->assertStatus(200);
+
+        // Verifique se o corpo da resposta contém os dados do registro de cliente
+        $response->assertJson([
+            'data' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'cpf' => $customer->cpf,
+                'phone' => $customer->phone,
+                'birthday' => $customer->birthday,
+                // Inclua outros campos, se houver
+            ],
+            "message" => "Customer successfully recovered.",
+            "status" => 200
+        ]);
+    }
+    public function testDestroy()
+    {
+        // Create a customer record to delete
+        $customer = Customer::factory()->create();
+
+
+        // Send a DELETE request to the destroy endpoint
+        $response = $this->delete("/api/customers/{$customer->id}");
+
+        // Check if the response has a 200 status code
+        $response->assertStatus(200);
+
+        // Check if the response has the expected JSON structure
+        $response->assertJson([
+            'data' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'cpf' => $customer->cpf,
+                'phone' => $customer->phone,
+                'birthday' => $customer->birthday,
+                // Inclua outros campos, se houver
+            ],
+            "message" => "Customer successfully recovered.",
+            "status" => 200
+        ]);
+
+        // Checar se o customer foi deletado
+        $this->assertDatabaseMissing('customers', [
+            'id' => $customer->id,
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(CustomerRequest $request)
+    public function testUpdate()
     {
-        $customer = $this->model->create($request->validated());
-        return new CustomerResource($customer);
-    }
+        // Create a customer in the database
+        $customer = Customer::factory()->create();
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        $customer = $this->model->findOrFail($id);
-        return new CustomerResource($customer);
-    }
+        // Update the customer's name and phone
+        $data = [
+            'name' => $customer->name,
+            'cpf' => $customer->cpf,
+            'phone' => $customer->phone,
+            'birthday' => $customer->birthday,
+        ];
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(CustomerRequest $request, string $id)
-    {
-        if (count($this->model->where('id', '', $id)->get()) == 0) {
-            return response()->json(['message' => 'Customer not found'], 404);
-        }
-        $customer = $this->model->findOrFail($id);
-        $customer->update($request->validated());
-        return new CustomerResource($customer);
-    }
+        $response = $this->put('/api/customers/' . $customer->id, $data);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        if (count($this->model->where('id', '', $id)->get()) == 0) {
-            return response()->json(['message' => 'Customer not found'], 404);
-        }
-        $customer = $this->model->findOrFail($id);
-        $this->model->destroy($id);
-        return new CustomerResource($customer);
+        $response->assertStatus(200); // Verifica se o status da resposta é 200 (OK)
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'cpf' => $customer->cpf,
+            'name' => $customer->name,
+            'phone' => $customer->phone,
+            'birthday' => $customer->birthday,
+        ]); // Verifica se o registro foi atualizado no banco de dados
     }
-
 }
