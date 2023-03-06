@@ -38,4 +38,39 @@ class CustomerController extends Controller
         $customer = $this->model->create($request->validated());
         return new CustomerResource($customer);
     }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $customer = $this->model->findOrFail($id);
+        return new CustomerResource($customer);
+    }
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(CustomerRequest $request, string $id)
+    {
+        if (count($this->model->where('id', '', $id)->get()) == 0) {
+            return response()->json(['message' => 'Customer not found'], 404);
+        }
+        $customer = $this->model->findOrFail($id);
+        $customer->update($request->validated());
+        return new CustomerResource($customer);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        if (count($this->model->where('id', '', $id)->get()) == 0) {
+            return response()->json(['message' => 'Customer not found'], 404);
+        }
+        $customer = $this->model->findOrFail($id);
+        $this->model->destroy($id);
+        return new CustomerResource($customer);
+    }
+
 }
