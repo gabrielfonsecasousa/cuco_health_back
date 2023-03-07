@@ -1,5 +1,7 @@
 README for https://github.com/gabrielfonsecasousa/cuco_health_back
 
+POSTMAN DOCUMENTATION: https://documenter.getpostman.com/view/13857857/2s93JoxR6V
+
 This is a backend project for managing customers in a healthcare context. It was written in Laravel and uses a MySQL database.
 Features
 
