@@ -1,0 +1,23 @@
+[build]
+  command = "php artisan build"
+  publish = "public"
+
+[dev]
+  command = "php artisan serve --host=$IP --port=$PORT"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.php/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/index.php/*"
+  to = "/:splat"
+  status = 200
+
+[[headers]]
+  # Serve all image types with a far future expires header.
+  # Avoid caching error when overwriting images with the same name.
+  for = "/images/*"
+    [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
